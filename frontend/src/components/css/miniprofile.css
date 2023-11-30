@@ -1,0 +1,25 @@
+/* MiniProfile.css */
+.mini-profile {
+    @apply flex border border-solid border-gray-300 p-4 m-2 text-center;
+}
+
+.name {
+    @apply flex w-full flex-col font-bold text-xl text-left;
+}
+
+.wrapper {
+    @apply max-w-xs;
+}
+
+.desc {
+    @apply line-clamp-2 text-left;
+}
+.profile-image {
+    @apply rounded-full w-24 h-24 object-cover mr-8;
+}
+
+@media (min-width: 768px) {
+    .mini-profile {
+        @apply p-8;
+    }
+}
