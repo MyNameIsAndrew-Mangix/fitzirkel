@@ -1,8 +1,13 @@
 import { faHouse } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Input } from '@nextui-org/react';
+import { User as UserModel } from '../models/user';
 
-const HeaderNav: React.FC = () => {
+interface HeaderNavProps {
+    user: UserModel;
+}
+
+const HeaderNav: React.FC<HeaderNavProps> = ({ user }) => {
     return (
         <nav>
             <FontAwesomeIcon icon={faHouse} />

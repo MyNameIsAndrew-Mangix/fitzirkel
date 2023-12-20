@@ -1,9 +1,14 @@
+import { User as UserModel } from '../models/user';
 import HeaderNav from './HeaderNav';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+    user: UserModel;
+}
+
+const Header: React.FC<HeaderProps> = ({ user }) => {
     return (
         <header>
-            <HeaderNav></HeaderNav>
+            <HeaderNav user={user}></HeaderNav>
         </header>
     );
 };
