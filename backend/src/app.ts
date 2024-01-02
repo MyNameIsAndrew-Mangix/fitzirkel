@@ -7,12 +7,11 @@ import pool from './db';
 import passport from 'passport';
 
 import userRoutes from './routes/UserRoutes';
+import { configureSessions } from './middleware/passport';
 
 const app = express();
-
+configureSessions(app);
 app.use(express.json());
-// app.use(passport.initialize());
-// app.use(passport.session());
 
 app.use(async (req, res, next) => {
     try {
