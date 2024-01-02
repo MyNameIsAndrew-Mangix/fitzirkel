@@ -4,12 +4,15 @@ import createHttpError from 'http-errors';
 import cors from 'cors';
 import session from 'express-session';
 import pool from './db';
+import passport from 'passport';
 
-import userRoutes from './routes/userRoutes';
+import userRoutes from './routes/UserRoutes';
 
 const app = express();
 
 app.use(express.json());
+// app.use(passport.initialize());
+// app.use(passport.session());
 
 app.use(async (req, res, next) => {
     try {
@@ -23,11 +26,9 @@ app.use(async (req, res, next) => {
 });
 
 app.use('/', (req, res, next) => {
-    res.send('Hello from root');
     next();
 });
 app.use('/api/', (req, res, next) => {
-    res.send('Welcome to the API');
     next();
 });
 app.use('/api/users', userRoutes);
