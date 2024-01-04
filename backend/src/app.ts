@@ -6,8 +6,10 @@ import session from 'express-session';
 import pool from './db';
 import passport from 'passport';
 
-import userRoutes from './routes/UserRoutes';
+import userRoutes from './routes/userRoutes';
+import postRoutes from './routes/postRoutes';
 import { configureSessions } from './middleware/passport';
+import { ensureAuth } from './middleware/authMiddleware';
 
 const app = express();
 configureSessions(app);
@@ -31,6 +33,7 @@ app.use('/api/', (req, res, next) => {
     next();
 });
 app.use('/api/users', userRoutes);
+app.use('/api/posts', ensureAuth, postRoutes);
 
 app.use((req, res, next) => {
     next(createHttpError(404, 'Endpoint not found')); //add a 404 page later
