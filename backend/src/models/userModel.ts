@@ -26,46 +26,37 @@ class UserDAO {
     async findByUsername(username: string): Promise<User | null> {
         const query = 'SELECT * FROM users WHERE username = $1 FOR UPDATE';
         const values = [username];
-        const client = await this.pool.connect();
         try {
-            const result: QueryResult = await client.query(query, values);
+            const result: QueryResult = await this.pool.query(query, values);
             const user: User | undefined = result.rows[0];
 
             return user || null;
         } catch (error) {
             throw new Error(`Error fetching user by username: ${error}`);
-        } finally {
-            client.release();
         }
     }
 
     async findByEmail(email: string): Promise<User | null> {
         const query = 'SELECT * FROM users WHERE email = $1 FOR UPDATE';
         const values = [email];
-        const client = await this.pool.connect();
         try {
-            const result: QueryResult = await client.query(query, values);
+            const result: QueryResult = await this.pool.query(query, values);
             const user: User | undefined = result.rows[0];
             return user || null;
         } catch (error) {
             throw new Error(`Error fetching user by email: ${error}`);
-        } finally {
-            client.release();
         }
     }
 
     async findById(id: number): Promise<User | null> {
         const query = 'SELECT * FROM users WHERE id = $1';
         const values = [id];
-        const client = await this.pool.connect();
         try {
-            const result: QueryResult = await client.query(query, values);
+            const result: QueryResult = await this.pool.query(query, values);
             const user: User | undefined = result.rows[0];
             return user || null;
         } catch (error) {
             throw new Error(`Error fetching user by ID: ${error}`);
-        } finally {
-            client.release();
         }
     }
 
