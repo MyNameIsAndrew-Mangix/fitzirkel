@@ -1,10 +1,9 @@
-import { RequestHandler, Request } from 'express';
-import * as UserModel from '../models/UserModel';
+import { RequestHandler } from 'express';
+import * as UserModel from '../models/userModel';
 import createHttpError from 'http-errors';
-import bcrypt, { hash } from 'bcrypt';
+import bcrypt from 'bcrypt';
 import { sendSuccessResponse } from '../util/responseUtils';
 import passport from 'passport';
-import { Strategy as LocalStrategy } from 'passport-local';
 
 interface HttpError {
     status: number;
@@ -12,6 +11,7 @@ interface HttpError {
 }
 
 export const createUser: RequestHandler = async (req, res, next) => {
+    const userDAO = new UserModel.UserDAO(req.db);
     const username = req.body.username;
     const email = req.body.email;
     const passRaw = req.body.password;
@@ -21,16 +21,12 @@ export const createUser: RequestHandler = async (req, res, next) => {
         }
         await req.db.query('BEGIN');
 
-        const userExistResult = await getUserByUsername(req, username);
-
-        if (userExistResult.rows.length > 0) {
+        const userExistResult = await userDAO.findByUsername(username);
+        if (userExistResult) {
             throw createHttpError(409, 'Username already exists');
         }
-        const emailExistResult = await req.db.query(
-            'SELECT 1 FROM users WHERE email = $1 FOR UPDATE',
-            [email]
-        );
-        if (emailExistResult.rows.length > 0) {
+        const emailExistResult = await userDAO.findByEmail(email);
+        if (emailExistResult) {
             throw createHttpError(409, 'Email already in use');
         }
 
@@ -53,26 +49,23 @@ export const createUser: RequestHandler = async (req, res, next) => {
     }
 };
 
-passport.use(
-    new LocalStrategy({ passReqToCallback: true }, async (req, username, password, done) => {
-        try {
-            const user = await getUserByUsername(req, username);
-
-            if (!user || !(await bcrypt.compare(password, user.password)))
-                return done(null, false, { message: 'Invalid username or password' });
-
-            return done(null, user);
-        } catch (error) {
-            return done(error);
+export const login: RequestHandler = (req, res, next) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    passport.authenticate('local', (err: any, user: Express.User, info: any) => {
+        if (err) return next(err);
+        if (!user) {
+            console.error('Authentication error:', info);
+            return createHttpError(401, 'Invalid credentials');
         }
-    })
-);
+        req.logIn(user, (loginErr) => {
+            if (loginErr) return next(loginErr);
+            sendSuccessResponse(res, 200, 'Login successful', user);
+        });
+    })(req, res, next);
+};
 
-async function getUserByUsername(req: Request, username: string) {
-    console.log(
-        JSON.stringify(
-            await req.db.query('SELECT 1 FROM users WHERE username = $1 FOR UPDATE', [username])
-        )
-    );
-    return await req.db.query('SELECT 1 FROM users WHERE username = $1 FOR UPDATE', [username]);
-}
+export const logout: RequestHandler = (req, res, next) => {
+    req.logout;
+    req.session.destroy;
+    res.redirect('/');
+};
