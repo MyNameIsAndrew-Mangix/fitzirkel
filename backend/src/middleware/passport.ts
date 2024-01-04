@@ -1,7 +1,7 @@
 import passport from 'passport';
 import { Strategy } from 'passport-local';
 import pool from '../db';
-import { UserDAO } from '../models/UserModel';
+import { UserDAO } from '../models/userModel';
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import { Express } from 'express-serve-static-core';
