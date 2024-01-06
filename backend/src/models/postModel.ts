@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Pool, QueryResult } from 'pg';
+import { EmptyResultError } from 'sequelize';
 
 interface Post {
     id?: number; //primary key
@@ -15,6 +17,31 @@ interface Post {
 class PostDAO {
     constructor(private pool: Pool) {}
 
+    private async executeQuery(query: string, values: any[], returnArray: false): Promise<Post | null>;
+    private async executeQuery(query: string, values: any[], returnArray: true): Promise<Post[] | null>;
+    private async executeQuery(query: string, values: any[], returnArray: boolean): Promise<Post | Post[] | null> {
+        try {
+            let result: QueryResult;
+            if (values.length === 0) {
+                result = await this.pool.query(query);
+            } else {
+                result = await this.pool.query(query, values);
+            }
+            const data = result.rows;
+
+            if (data.length === 0) {
+                throw new Error('No data found for the query');
+            }
+            if (returnArray) {
+                return data;
+            } else {
+                return data[0];
+            }
+        } catch (error) {
+            throw new EmptyResultError(`Error executing query: ${error}`);
+        }
+    }
+
     async createPost(post: Post): Promise<Post | null> {
         const query = `INSERT INTO posts (user_id, content, post_date, likes, dislikes, comments, view_count, tags)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -30,47 +57,50 @@ class PostDAO {
             post.tags || [],
         ];
 
-        try {
-            const result: QueryResult = await this.pool.query(query, values);
-            if (result.rows.length === 0) {
-                throw new Error('No rows returned after creating the post');
-            }
-            const createdPost: Post = result.rows[0];
-            return createdPost;
-        } catch (error) {
-            console.error(`Error creating post: ${error}`);
-            return null;
-        }
+        return await this.executeQuery(query, values, false);
     }
 
     async getPostsForUserFeed(): Promise<Post[] | null> {
         const query = 'SELECT * FROM posts ORDER BY post_date DESC LIMIT 10';
-
-        try {
-            const result: QueryResult = await this.pool.query(query);
-            if (result.rows.length === 0) {
-                throw new Error('No rows returned from 10 most recent post query');
-            }
-            const posts: Post[] = result.rows;
-
-            return posts || null;
-        } catch (error) {
-            throw new Error(`Error fetching 10 most recent posts: ${error}`);
-        }
+        return await this.executeQuery(query, [], true);
+    }
+    async getById(id: number): Promise<Post | null> {
+        const query = 'SELECT * FROM posts WHERE id = $1';
+        const values = [id];
+        return await this.executeQuery(query, values, false);
     }
 
-    async findByUserId(userId: number): Promise<Post[] | null> {
+    async getByUserId(userId: number): Promise<Post[] | null> {
         const query = 'SELECT * FROM posts WHERE user_id = $1';
         const values = [userId];
-        try {
-            const result: QueryResult = await this.pool.query(query, values);
-            const posts: Post[] = result.rows;
+        return await this.executeQuery(query, values, true);
+    }
 
-            return posts || null;
-        } catch (error) {
-            throw new Error(`Error fetching post by user.id: ${error}`);
-        }
+    async updateContent(id: number, content: string): Promise<Post | null> {
+        const query = 'UPDATE posts SET content = $2 WHERE id = $1 RETURNING *;';
+        const values = [id, content];
+        return await this.executeQuery(query, values, false);
+    }
+
+    async updateLikesAndDislikes(id: number, newLikes: number, newDislikes: number): Promise<Post | null> {
+        const query = 'UPDATE posts SET likes = $2, dislikes = $3 WHERE id = $1 RETURNING *;';
+        const values = [id, newLikes, newDislikes];
+        return await this.executeQuery(query, values, false);
+    }
+    async updateComments(id: number, newCommentCount: number): Promise<Post | null> {
+        const query = 'UPDATE posts SET comments = $2 WHERE id = $1 RETURNING *;';
+        const values = [id, newCommentCount];
+        return await this.executeQuery(query, values, false);
+    }
+    async updateViewCount(id: number, newViewCount: number): Promise<Post | null> {
+        const query = 'UPDATE posts SET view_count = $2 WHERE id = $1 RETURNING *;';
+        const values = [id, newViewCount];
+        return await this.executeQuery(query, values, false);
+    }
+    async updateTags(id: number, newTags: string[]): Promise<Post | null> {
+        const query = 'UPDATE posts SET tags = $2 WHERE id = $1 RETURNING *;';
+        const values = [id, newTags];
+        return await this.executeQuery(query, values, false);
     }
 }
-
 export { Post, PostDAO };

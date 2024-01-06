@@ -8,16 +8,6 @@ interface User {
     password: string;
     first_name?: string;
     last_name?: string;
-    //one to many relation, user to posts
-    //profile foreign key?
-    /* DOES THIS MAKE SENSE OR AM I INSANE?
-     * password foreign key ->
-     * Password {id number,
-     *  user_id number foreign key,
-     *  password_hash string,
-     *  salt string
-     * }
-     */
 }
 
 class UserDAO {
